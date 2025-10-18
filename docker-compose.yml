@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: nube-web
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: nube
+      MARIADB_USER: appuser
+      MARIADB_PASSWORD: apppass
+    volumes: 
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -uroot -proot || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: ./app-php
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: nube-db
+      DB_PORT: 3306
+      DB_NAME: empresa
+      DB_USER: appuser
+      DB_PASSWORD: apppass
+      APP_REQUIRED_PORT: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  db_data:
